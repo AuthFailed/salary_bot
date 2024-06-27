@@ -7,4 +7,7 @@ user_router = Router()
 
 @user_router.message(CommandStart())
 async def user_start(message: Message):
-    await message.reply("Приветствую, пользователь!\nИспользуй команду /salary для расчета ЗП")
+    await message.reply(
+        "Приветствую, пользователь!\nИспользуй команду /salary для расчета ЗП"
+    )
+
