@@ -32,7 +32,6 @@ async def show_menu(message: Message, state: FSMContext):
     await message.answer("Выбери пункт меню:", reply_markup=salary_menu())
 
 
-# We can use F.data filter to filter callback queries by data field from CallbackQuery object
 @menu_router.callback_query(F.data == "count_salary")
 async def create_order(query: CallbackQuery, state: FSMContext):
     await query.answer(text="Вы выбрали расчет ЗП!")
@@ -184,7 +183,7 @@ async def process_sl(query: CallbackQuery, state: FSMContext):
 🏆 <b>SL</b>: {user_data["SL"]}%
 
 Оклад составляет <b>{salary["hours_salary"]}</b> руб
-Коэффициент составляет <b>{salary["coefficient"]}</b>
+Коэффициент составляет <b>{salary["coefficient"]}</b> руб
 Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
 
 Общий процент премии составляет <b>{salary["premium_percent"]}%</b>
@@ -244,7 +243,7 @@ async def process_tests(query: CallbackQuery, state: FSMContext):
 ⭐ <b>Оценка клиента</b>: {user_data["CLIENT_RATING"]}%
 
 Оклад составляет <b>{salary["hours_salary"]}</b> руб
-Коэффициент составляет <b>{salary["coefficient"]}</b>
+Коэффициент составляет <b>{salary["coefficient"]}</b> руб
 Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
 
 Общий процент премии составляет <b>{salary["premium_percent"]}%</b>

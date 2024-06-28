@@ -6,7 +6,7 @@ def salary_menu():
     keyboard = InlineKeyboardBuilder()
 
     keyboard.button(text="💸 Расчет ЗП", callback_data="count_salary")
-
+    keyboard.button(text="🏖️ Расчет отпускных", callback_data="count_vacation")
     return keyboard.as_markup()
 
 
@@ -159,6 +159,7 @@ def admin_main_menu():
     keyboard = InlineKeyboardBuilder()
 
     keyboard.button(text="💸 Расчет ЗП", callback_data="count_salary")
+    keyboard.button(text="🏖️ Расчет отпускных", callback_data="count_vacation")
     keyboard.button(text="⚙️ Настройки", callback_data="admin_settings")
     keyboard.button(text="👥 Пользователи", callback_data="admin_users")
     keyboard.button(text="📢 Рассылка", callback_data="admin_broadcast")

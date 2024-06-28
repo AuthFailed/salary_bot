@@ -12,3 +12,8 @@ class SalaryCountStates(StatesGroup):
     CLIENT_RATING = State()
     TESTS = State()
     SL = State()
+
+
+class VacationCountStates(StatesGroup):
+    TOTAL_YEAR_SALARY = State()
+    VACATION_DAYS = State()

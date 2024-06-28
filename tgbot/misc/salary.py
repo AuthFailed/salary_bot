@@ -35,3 +35,14 @@ async def salary_with_percents(
         "sum_after_tax": sum_after_tax,
     }
     return salary
+
+
+async def vacation_pay(
+    total_year_salary: float,
+    vacation_days_count: int = 14,
+    calendar_days_in_period: float = 351.6,
+):
+    vacation_pay = round(
+        total_year_salary / calendar_days_in_period * vacation_days_count, 2
+    )
+    return vacation_pay
