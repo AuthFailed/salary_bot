@@ -19,6 +19,25 @@ def position():
     return keyboard.as_markup()
 
 
+def salary_coefficient():
+    keyboard = InlineKeyboardBuilder()
+
+    keyboard.button(text="1", callback_data="coefficient_1")
+    keyboard.button(text="1.15", callback_data="coefficient_1.15")
+    keyboard.button(text="1.2", callback_data="coefficient_1.2")
+    keyboard.button(text="1.25", callback_data="coefficient_1.25")
+    keyboard.button(text="1.3", callback_data="coefficient_1.3")
+    keyboard.button(text="1.4", callback_data="coefficient_1.4")
+    keyboard.button(text="1.5", callback_data="coefficient_1.5")
+    keyboard.button(text="1.6", callback_data="coefficient_1.6")
+    keyboard.button(text="1.7", callback_data="coefficient_1.7")
+    keyboard.button(text="1.8", callback_data="coefficient_1.8")
+    keyboard.button(text="2", callback_data="coefficient_2")
+
+    keyboard.adjust(3)
+    return keyboard.as_markup()
+
+
 def salary_specialistist_aht():
     keyboard = InlineKeyboardBuilder()
 

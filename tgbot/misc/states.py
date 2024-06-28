@@ -5,6 +5,7 @@ class SalaryCountStates(StatesGroup):
     POSITION = State()
     HOURLY_RATE = State()
     HOURS_WORKED = State()
+    COEFFICIENT = State()
     AHT = State()
     FLR = State()
     GOK = State()

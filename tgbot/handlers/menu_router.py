@@ -18,6 +18,7 @@ from tgbot.keyboards.inline import (
     salary_specialist_rate,
     salary_specialist_tests,
     salary_supervisor_sl,
+    salary_coefficient,
 )
 from tgbot.misc.states import SalaryCountStates
 from tgbot.misc.salary import salary_with_percents
@@ -64,16 +65,28 @@ async def process_hourly_rate(message: Message, state: FSMContext) -> None:
 @menu_router.message(SalaryCountStates.HOURS_WORKED)
 async def process_hours_worked(message: Message, state: FSMContext) -> None:
     await state.update_data(HOURS_WORKED=message.text)
+    await state.set_state(SalaryCountStates.COEFFICIENT)
+
+    await message.answer(
+        "⚡ Введи <b>районный коэффициент</b>\nНайти его можно <a href='https://portal.fss.ru/fss/reg-rates'>здесь</a>",
+        reply_markup=salary_coefficient(),
+    )
+
+
+@menu_router.callback_query(F.data.contains("coefficient"))
+@menu_router.message(SalaryCountStates.COEFFICIENT)
+async def process_coefficient(query: CallbackQuery, state: FSMContext) -> None:
+    await state.update_data(COEFFICIENT=query.data.split("_")[-1])
     await state.set_state(SalaryCountStates.AHT)
 
     user_data = await state.get_data()
     if user_data["POSITION"] == "specialist":
-        await message.answer(
+        await query.message.edit_text(
             "⚡ Введи процент премии за <b>AHT</b>",
             reply_markup=salary_specialistist_aht(),
         )
     else:
-        await message.answer(
+        await query.message.edit_text(
             "⚡ Введи процент премии за <b>AHT</b>",
             reply_markup=salary_supervisor_aht(),
         )
@@ -82,7 +95,7 @@ async def process_hours_worked(message: Message, state: FSMContext) -> None:
 @menu_router.callback_query(F.data.contains("aht"))
 @menu_router.message(SalaryCountStates.AHT)
 async def process_aht(query: CallbackQuery, state: FSMContext) -> None:
-    await query.answer(text=f"Процент премии за AHT - {query.data.split("_")[-1]}!")
+    await query.answer(text=f"Процент премии за AHT - {query.data.split('_')[-1]}!")
     await state.update_data(AHT=query.data.split("_")[-1])
     await state.set_state(SalaryCountStates.FLR)
 
@@ -102,7 +115,7 @@ async def process_aht(query: CallbackQuery, state: FSMContext) -> None:
 @menu_router.callback_query(F.data.contains("flr"))
 @menu_router.message(SalaryCountStates.FLR)
 async def process_flr(query: CallbackQuery, state: FSMContext) -> None:
-    await query.answer(text=f"Процент премии за FLR - {query.data.split("_")[-1]}!")
+    await query.answer(text=f"Процент премии за FLR - {query.data.split('_')[-1]}!")
     await state.update_data(FLR=query.data.split("_")[-1])
     await state.set_state(SalaryCountStates.GOK)
 
@@ -122,7 +135,7 @@ async def process_flr(query: CallbackQuery, state: FSMContext) -> None:
 @menu_router.callback_query(F.data.contains("gok"))
 @menu_router.message(SalaryCountStates.GOK)
 async def process_gok(query: CallbackQuery, state: FSMContext) -> None:
-    await query.answer(text=f"Процент премии за ГОК - {query.data.split("_")[-1]}!")
+    await query.answer(text=f"Процент премии за ГОК - {query.data.split('_')[-1]}!")
     await state.update_data(GOK=query.data.split("_")[-1])
     user_data = await state.get_data()
     if user_data["POSITION"] == "specialist":
@@ -133,7 +146,7 @@ async def process_gok(query: CallbackQuery, state: FSMContext) -> None:
             reply_markup=salary_specialist_rate(),
         )
     else:
-        await state.set_state(SalaryCountStates.CLIENT_RATING)
+        await state.set_state(SalaryCountStates.SL)
 
         await query.message.edit_text(
             "🏆 Теперь введи процент премии за <b>SL</b>",
@@ -144,7 +157,7 @@ async def process_gok(query: CallbackQuery, state: FSMContext) -> None:
 @menu_router.callback_query(F.data.contains("sl"))
 @menu_router.message(SalaryCountStates.SL)
 async def process_sl(query: CallbackQuery, state: FSMContext):
-    await query.answer(text=f"Процент премии за SL - {query.data.split("_")[-1]}!")
+    await query.answer(text=f"Процент премии за SL - {query.data.split('_')[-1]}!")
     await state.update_data(SL=query.data.split("_")[-1])
 
     user_data = await state.get_data()
@@ -152,6 +165,7 @@ async def process_sl(query: CallbackQuery, state: FSMContext):
         position=user_data["POSITION"],
         hourly_payment=float(user_data["HOURLY_RATE"]),
         hours_worked=int(user_data["HOURS_WORKED"]),
+        coefficient=float(user_data["COEFFICIENT"]),
         aht=int(user_data["AHT"]),
         flr=int(user_data["FLR"]),
         gok=int(user_data["GOK"]),
@@ -163,15 +177,19 @@ async def process_sl(query: CallbackQuery, state: FSMContext):
 💼 <b>Должность</b>: Руководитель
 🕖 <b>ЧТС</b>: {user_data["HOURLY_RATE"]} руб/час
 ⏳ <b>Отработано</b>: {user_data["HOURS_WORKED"]} часов
+📊 <b>Коэффициент</b>: {user_data["COEFFICIENT"]}
 ⚡ <b>AHT</b>: {user_data["AHT"]}%
 ⚙️ <b>FLR</b>: {user_data["FLR"]}%
 💯 <b>ГОК</b>: {user_data["GOK"]}%
 🏆 <b>SL</b>: {user_data["SL"]}%
 
 Оклад составляет <b>{salary["hours_salary"]}</b> р.
+Коэффициент составляет <b>{salary["coefficient"]}</b>
+Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
+
 Общий процент премии составляет <b>{salary["premium_percent"]}%</b>
 Премия составляет <b>{salary["premium_salary"]}</b> р.
-ЗП + Премия составляет <b>{salary["salary_sum"]}</b> р.
+ЗП + Коэффициент + Премия составляют <b>{salary["salary_sum"]}</b> р.
 """
     await query.message.edit_text(message)
     await state.clear()
@@ -180,7 +198,7 @@ async def process_sl(query: CallbackQuery, state: FSMContext):
 @menu_router.callback_query(F.data.contains("rate"))
 @menu_router.message(SalaryCountStates.CLIENT_RATING)
 async def process_rate(query: CallbackQuery, state: FSMContext):
-    await query.answer(text=f"Процент премии за ОК - {query.data.split("_")[-1]}!")
+    await query.answer(text=f"Процент премии за ОК - {query.data.split('_')[-1]}!")
     await state.update_data(CLIENT_RATING=query.data.split("_")[-1])
 
     await state.set_state(SalaryCountStates.TESTS)
@@ -194,7 +212,7 @@ async def process_rate(query: CallbackQuery, state: FSMContext):
 @menu_router.callback_query(F.data.contains("tests"))
 @menu_router.message(SalaryCountStates.TESTS)
 async def process_tests(query: CallbackQuery, state: FSMContext):
-    await query.answer(text=f"Процент премии за ОК - {query.data.split("_")[-1]}!")
+    await query.answer(text=f"Процент премии за ОК - {query.data.split('_')[-1]}!")
     await state.update_data(TESTS=query.data.split("_")[-1])
     # Получение данных пользователя
 
@@ -203,6 +221,7 @@ async def process_tests(query: CallbackQuery, state: FSMContext):
         position=user_data["POSITION"],
         hourly_payment=float(user_data["HOURLY_RATE"]),
         hours_worked=int(user_data["HOURS_WORKED"]),
+        coefficient=float(user_data["COEFFICIENT"]),
         aht=int(user_data["AHT"]),
         flr=int(user_data["FLR"]),
         gok=int(user_data["GOK"]),
@@ -215,16 +234,18 @@ async def process_tests(query: CallbackQuery, state: FSMContext):
 💼 <b>Должность</b>: Специалист
 🕖 <b>ЧТС</b>: {user_data["HOURLY_RATE"]} руб/час
 ⏳ <b>Отработано</b>: {user_data["HOURS_WORKED"]} часов
+📊 <b>Коэффициент</b>: {user_data["COEFFICIENT"]}
 ⚡ <b>AHT</b>: {user_data["AHT"]}%
 ⚙️ <b>FLR</b>: {user_data["FLR"]}%
 💯 <b>ГОК</b>: {user_data["GOK"]}%
-📈 <b>ОК</b>: {user_data["CLIENT_RATING"]}%
-🧪 <b>Тесты</b>: {'5%' if("yes" in user_data["TESTS"]) else '0%'}
 
 Оклад составляет <b>{salary["hours_salary"]}</b> р.
+Коэффициент составляет <b>{salary["coefficient"]}</b>
+Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
+
 Общий процент премии составляет <b>{salary["premium_percent"]}%</b>
 Премия составляет <b>{salary["premium_salary"]}</b> р.
-ЗП + Премия составляет <b>{salary["salary_sum"]}</b> р.
+ЗП + Коэффициент + Премия составляют <b>{salary["salary_sum"]}</b> р.
 """
     await query.message.edit_text(message)
     await state.clear()
