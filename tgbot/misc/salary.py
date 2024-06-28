@@ -9,6 +9,9 @@ async def salary_with_percents(
     client_rating: int = 0,
     tests: str = 0,
     sl: int = 0,
+    acknowledgments: int = 0,
+    mentoring_type: str = "",
+    mentoring_days: float = 0,
 ):
     hours_salary = round(hourly_payment * hours_worked, 2)
     coefficient = round((hours_salary * coefficient) - hours_salary, 2)
@@ -16,14 +19,22 @@ async def salary_with_percents(
     premium_percent = aht + flr + gok
     if position == "specialist":
         tests = 5 if tests == "yes" else 0
-        premium_percent += tests + client_rating
+        premium_percent += tests + client_rating + acknowledgments
+        if mentoring_type != "":
+            if mentoring_type == "3d":
+                mentoring = mentoring_days * 0.5
+            elif mentoring_type == "main":
+                mentoring = mentoring_days * 1
+            else:
+                mentoring = mentoring_days * 1.5
+            premium_percent += mentoring
     else:
         premium_percent += sl
     premium_salary = round(hours_salary * (premium_percent / 100), 2)
     salary_sum = round(sum_hours_coefficient + premium_salary, 2)
 
     tax = round(salary_sum * 0.13, 2)
-    sum_after_tax = salary_sum - tax
+    sum_after_tax = round(salary_sum - tax, 2)
     salary = {
         "hours_salary": hours_salary,
         "coefficient": coefficient,

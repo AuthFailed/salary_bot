@@ -11,6 +11,10 @@ class SalaryCountStates(StatesGroup):
     GOK = State()
     CLIENT_RATING = State()
     TESTS = State()
+    ACKNOWLEDGMENTS = State()
+    MENTOR = State()
+    MENTOR_TYPE = State()
+    MENTOR_DAYS = State()
     SL = State()
 
 

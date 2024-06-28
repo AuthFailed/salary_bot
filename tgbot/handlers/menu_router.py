@@ -19,6 +19,10 @@ from tgbot.keyboards.inline import (
     salary_specialist_tests,
     salary_supervisor_sl,
     salary_coefficient,
+    salary_specialist_acknowledgments,
+    salary_specialist_mentor,
+    salary_specialist_mentoring_days,
+    salary_specialist_mentor_type,
 )
 from tgbot.misc.states import SalaryCountStates
 from tgbot.misc.salary import salary_with_percents
@@ -214,8 +218,103 @@ async def process_rate(query: CallbackQuery, state: FSMContext):
 @menu_router.callback_query(F.data.contains("tests"))
 @menu_router.message(SalaryCountStates.TESTS)
 async def process_tests(query: CallbackQuery, state: FSMContext):
-    await query.answer(text=f"Процент премии за ОК - {query.data.split('_')[-1]}!")
+    await query.answer(text=f"Тесты - {query.data.split('_')[-1]}!")
     await state.update_data(TESTS=query.data.split("_")[-1])
+    await state.set_state(SalaryCountStates.ACKNOWLEDGMENTS)
+
+    await query.message.edit_text(
+        "🙏🏻 Теперь введи процент премии за <b>благодарности</b>",
+        reply_markup=salary_specialist_acknowledgments(),
+    )
+
+
+@menu_router.callback_query(F.data.contains("acknowledgments"))
+@menu_router.message(SalaryCountStates.ACKNOWLEDGMENTS)
+async def process_acknowledgments(query: CallbackQuery, state: FSMContext):
+    await query.answer(text=f"Благодарности - {query.data.split('_')[-1]}!")
+    await state.update_data(ACKNOWLEDGMENTS=query.data.split("_")[-1])
+    await state.set_state(SalaryCountStates.MENTOR)
+
+    await query.message.edit_text(
+        "🎓 Теперь выбери <b>наставник</b> ли ты",
+        reply_markup=salary_specialist_mentor(),
+    )
+
+
+@menu_router.callback_query(F.data.startswith("mentor"))
+@menu_router.message(SalaryCountStates.MENTOR)
+async def process_mentoring(query: CallbackQuery, state: FSMContext):
+    await query.answer(text=f"Наставничество - {query.data.split('_')[-1]}!")
+    await state.update_data(MENTOR=query.data.split("_")[-1])
+
+    if query.data.split("_")[-1] == "yes":
+        await state.set_state(SalaryCountStates.MENTOR_TYPE)
+        await query.message.edit_text(
+            "🎓 Выбери тип наставничества",
+            reply_markup=salary_specialist_mentor_type(),
+        )
+    else:
+        user_data = await state.get_data()
+        salary = await salary_with_percents(
+            position=user_data["POSITION"],
+            hourly_payment=float(user_data["HOURLY_RATE"]),
+            hours_worked=int(user_data["HOURS_WORKED"]),
+            coefficient=float(user_data["COEFFICIENT"]),
+            aht=int(user_data["AHT"]),
+            flr=int(user_data["FLR"]),
+            gok=int(user_data["GOK"]),
+            client_rating=int(user_data["CLIENT_RATING"]),
+            tests=user_data["TESTS"],
+            acknowledgments=int(user_data["ACKNOWLEDGMENTS"]),
+        )
+
+        message = f"""
+Спасибо! Вот введенные тобой показатели:
+💼 <b>Должность</b>: Специалист
+🕖 <b>ЧТС</b>: {user_data["HOURLY_RATE"]} руб/час
+⏳ <b>Отработано</b>: {user_data["HOURS_WORKED"]} часов
+📊 <b>Коэффициент</b>: {user_data["COEFFICIENT"]}
+⚡ <b>AHT</b>: {user_data["AHT"]}%
+⚙️ <b>FLR</b>: {user_data["FLR"]}%
+💯 <b>ГОК</b>: {user_data["GOK"]}%
+⭐ <b>Оценка клиента</b>: {user_data["CLIENT_RATING"]}%
+🙏🏻 <b>Благодарности</b>: {user_data["ACKNOWLEDGMENTS"]}%
+🎓 <b>Наставничество</b>: Нет
+
+Оклад составляет <b>{salary["hours_salary"]}</b> руб
+Коэффициент составляет <b>{salary["coefficient"]}</b> руб
+Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
+
+Общий процент премии составляет <b>{salary["premium_percent"]}%</b>
+Премия составляет <b>{salary["premium_salary"]}</b> руб
+
+Общая сумма до вычета составляет <b>{salary["salary_sum"]}</b> руб
+Налоги съедят <b>{salary["tax"]}</b> руб
+Общая сумма после вычета составляет <b>{salary["sum_after_tax"]}</b> руб
+    """
+        await query.message.edit_text(message)
+        await state.clear()
+
+
+@menu_router.callback_query(F.data.contains("typementor"))
+@menu_router.message(SalaryCountStates.MENTOR_TYPE)
+async def process_mentoring_type(query: CallbackQuery, state: FSMContext):
+    await query.answer(text=f"Тип наставничества - {query.data.split('_')[-1]}!")
+    await state.update_data(MENTOR_TYPE=query.data.split("_")[-1])
+
+    await state.set_state(SalaryCountStates.MENTOR_DAYS)
+    await query.message.edit_text(
+        "🎓 Выбери кол-во дней наставничества в месяце",
+        reply_markup=salary_specialist_mentoring_days(),
+    )
+
+
+@menu_router.callback_query(F.data.contains("daysmentoring"))
+@menu_router.message(SalaryCountStates.MENTOR_DAYS)
+async def process_mentoring_days(query: CallbackQuery, state: FSMContext):
+    await query.answer(text=f"Дней наставничества - {query.data.split('_')[-1]}!")
+    await state.update_data(MENTOR_DAYS=query.data.split("_")[-1])
+    user_data = await state.get_data()
     # Получение данных пользователя
 
     user_data = await state.get_data()
@@ -229,7 +328,17 @@ async def process_tests(query: CallbackQuery, state: FSMContext):
         gok=int(user_data["GOK"]),
         client_rating=int(user_data["CLIENT_RATING"]),
         tests=user_data["TESTS"],
+        acknowledgments=int(user_data["ACKNOWLEDGMENTS"]),
+        mentoring_type=user_data["MENTOR_TYPE"],
+        mentoring_days=int(user_data["MENTOR_DAYS"]),
     )
+
+    if user_data["MENTOR_TYPE"] == "3d":
+        mentor_type = "3D"
+    elif user_data["MENTOR_TYPE"] == "main":
+        mentor_type = "Основной"
+    else:
+        mentor_type = "Общий"
 
     message = f"""
 Спасибо! Вот введенные тобой показатели:
@@ -241,6 +350,8 @@ async def process_tests(query: CallbackQuery, state: FSMContext):
 ⚙️ <b>FLR</b>: {user_data["FLR"]}%
 💯 <b>ГОК</b>: {user_data["GOK"]}%
 ⭐ <b>Оценка клиента</b>: {user_data["CLIENT_RATING"]}%
+🙏🏻 <b>Благодарности</b>: {user_data["ACKNOWLEDGMENTS"]}%
+🎓 <b>Наставничество</b>: {mentor_type}, {user_data["MENTOR_DAYS"]} дней
 
 Оклад составляет <b>{salary["hours_salary"]}</b> руб
 Коэффициент составляет <b>{salary["coefficient"]}</b> руб
