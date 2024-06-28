@@ -142,7 +142,7 @@ async def process_gok(query: CallbackQuery, state: FSMContext) -> None:
         await state.set_state(SalaryCountStates.CLIENT_RATING)
 
         await query.message.edit_text(
-            "📈 Теперь введи процент премии за <b>оценку от клиента</b>",
+            "⭐ Теперь введи процент премии за <b>оценку от клиента</b>",
             reply_markup=salary_specialist_rate(),
         )
     else:
@@ -183,13 +183,16 @@ async def process_sl(query: CallbackQuery, state: FSMContext):
 💯 <b>ГОК</b>: {user_data["GOK"]}%
 🏆 <b>SL</b>: {user_data["SL"]}%
 
-Оклад составляет <b>{salary["hours_salary"]}</b> р.
+Оклад составляет <b>{salary["hours_salary"]}</b> руб
 Коэффициент составляет <b>{salary["coefficient"]}</b>
 Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
 
 Общий процент премии составляет <b>{salary["premium_percent"]}%</b>
-Премия составляет <b>{salary["premium_salary"]}</b> р.
-ЗП + Коэффициент + Премия составляют <b>{salary["salary_sum"]}</b> р.
+Премия составляет <b>{salary["premium_salary"]}</b> руб
+
+Общая сумма до вычета составляет <b>{salary["salary_sum"]}</b> руб
+Налоги съедят <b>{salary["tax"]}</b> руб
+Общая сумма после вычета составляет <b>{salary["sum_after_tax"]}</b> руб
 """
     await query.message.edit_text(message)
     await state.clear()
@@ -238,14 +241,18 @@ async def process_tests(query: CallbackQuery, state: FSMContext):
 ⚡ <b>AHT</b>: {user_data["AHT"]}%
 ⚙️ <b>FLR</b>: {user_data["FLR"]}%
 💯 <b>ГОК</b>: {user_data["GOK"]}%
+⭐ <b>Оценка клиента</b>: {user_data["CLIENT_RATING"]}%
 
-Оклад составляет <b>{salary["hours_salary"]}</b> р.
+Оклад составляет <b>{salary["hours_salary"]}</b> руб
 Коэффициент составляет <b>{salary["coefficient"]}</b>
 Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
 
 Общий процент премии составляет <b>{salary["premium_percent"]}%</b>
-Премия составляет <b>{salary["premium_salary"]}</b> р.
-ЗП + Коэффициент + Премия составляют <b>{salary["salary_sum"]}</b> р.
+Премия составляет <b>{salary["premium_salary"]}</b> руб
+
+Общая сумма до вычета составляет <b>{salary["salary_sum"]}</b> руб
+Налоги съедят <b>{salary["tax"]}</b> руб
+Общая сумма после вычета составляет <b>{salary["sum_after_tax"]}</b> руб
 """
     await query.message.edit_text(message)
     await state.clear()
