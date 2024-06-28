@@ -22,7 +22,7 @@ async def salary_with_percents(
     premium_salary = round(hours_salary * (premium_percent / 100), 2)
     salary_sum = round(sum_hours_coefficient + premium_salary, 2)
 
-    tax = salary_sum * 0.13
+    tax = round(salary_sum * 0.13, 2)
     sum_after_tax = salary_sum - tax
     salary = {
         "hours_salary": hours_salary,
