@@ -11,7 +11,7 @@ async def salary_with_percents(
     sl: int = 0,
 ):
     hours_salary = round(hourly_payment * hours_worked, 2)
-    coefficient = (hours_salary * coefficient) - hours_salary
+    coefficient = round((hours_salary * coefficient) - hours_salary, 2)
     sum_hours_coefficient = hours_salary + coefficient
     premium_percent = aht + flr + gok
     if position == "specialist":
