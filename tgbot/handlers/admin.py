@@ -1,10 +1,32 @@
 from tgbot.keyboards.inline import admin_main_menu
-
+from aiogram import F
 from aiogram import Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from aiogram.types import CallbackQuery
+
 
 from tgbot.filters.admin import AdminFilter
+from tgbot.keyboards.inline import (
+    salary_menu,
+    position,
+    salary_specialistist_aht,
+    salary_supervisor_aht,
+    OrderCallbackData,
+    salary_specialistist_flr,
+    salary_supervisor_flr,
+    salary_specialistist_gok,
+    salary_supervisor_gok,
+    salary_specialist_rate,
+    salary_specialist_tests,
+    salary_supervisor_sl,
+    salary_coefficient,
+    salary_specialist_acknowledgments,
+    salary_specialist_mentor,
+    salary_specialist_mentoring_days,
+    salary_specialist_mentor_type,
+    count_type,
+)
 
 admin_router = Router()
 admin_router.message.filter(AdminFilter())

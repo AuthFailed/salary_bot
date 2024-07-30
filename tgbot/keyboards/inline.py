@@ -10,6 +10,14 @@ def salary_menu():
     return keyboard.as_markup()
 
 
+def count_type():
+    keyboard = InlineKeyboardBuilder()
+
+    keyboard.button(text="📊 Показатели", callback_data="counttype_percents")
+    keyboard.button(text="🌟 Общ. процент", callback_data="counttype_sum")
+    return keyboard.as_markup()
+
+
 def position():
     keyboard = InlineKeyboardBuilder()
 

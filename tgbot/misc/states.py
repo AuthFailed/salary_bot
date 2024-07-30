@@ -2,6 +2,8 @@ from aiogram.fsm.state import StatesGroup, State
 
 
 class SalaryCountStates(StatesGroup):
+    COUNT_TYPE = State()
+    PREMIUM_PERCENT = State()
     POSITION = State()
     HOURLY_RATE = State()
     HOURS_WORKED = State()

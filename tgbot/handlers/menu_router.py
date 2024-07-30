@@ -23,6 +23,7 @@ from tgbot.keyboards.inline import (
     salary_specialist_mentor,
     salary_specialist_mentoring_days,
     salary_specialist_mentor_type,
+    count_type,
 )
 from tgbot.misc.states import SalaryCountStates
 from tgbot.misc.salary import salary_with_percents
@@ -37,13 +38,20 @@ async def show_menu(message: Message, state: FSMContext):
 
 
 @menu_router.callback_query(F.data == "count_salary")
-async def create_order(query: CallbackQuery, state: FSMContext):
+async def start_count_salary(query: CallbackQuery, state: FSMContext):
     await query.answer(text="Вы выбрали расчет ЗП!")
-    await state.set_state(SalaryCountStates.POSITION)
+    await state.set_state(SalaryCountStates.COUNT_TYPE)
+    await query.message.answer("Выбери тип расчета:", reply_markup=count_type())
 
+
+@menu_router.callback_query(F.data.contains("counttype"))
+@menu_router.message(SalaryCountStates.COUNT_TYPE)
+async def process_count_type(query: CallbackQuery, state: FSMContext) -> None:
+    await state.update_data(COUNT_TYPE=query.data.split("_")[-1])
     await query.message.edit_text(
         "Давай посчитаем зарплату\nВыбери свою должность", reply_markup=position()
     )
+    await state.set_state(SalaryCountStates.POSITION)
 
 
 @menu_router.callback_query(F.data.contains("position"))
@@ -68,8 +76,8 @@ async def process_hourly_rate(message: Message, state: FSMContext) -> None:
 @menu_router.message(SalaryCountStates.HOURS_WORKED)
 async def process_hours_worked(message: Message, state: FSMContext) -> None:
     await state.update_data(HOURS_WORKED=message.text)
-    await state.set_state(SalaryCountStates.COEFFICIENT)
 
+    await state.set_state(SalaryCountStates.COEFFICIENT)
     await message.answer(
         "⚡ Введи <b>районный коэффициент</b>\nНайти его можно <a href='https://portal.fss.ru/fss/reg-rates'>здесь</a>",
         reply_markup=salary_coefficient(),
@@ -81,18 +89,57 @@ async def process_hours_worked(message: Message, state: FSMContext) -> None:
 async def process_coefficient(query: CallbackQuery, state: FSMContext) -> None:
     await state.update_data(COEFFICIENT=query.data.split("_")[-1])
     await state.set_state(SalaryCountStates.AHT)
-
     user_data = await state.get_data()
-    if user_data["POSITION"] == "specialist":
-        await query.message.edit_text(
-            "⚡ Введи процент премии за <b>AHT</b>",
-            reply_markup=salary_specialistist_aht(),
-        )
+
+    if user_data["COUNT_TYPE"] == "sum":
+        await query.message.answer("🌟 Теперь введи <b>процент премии</b>")
+        await state.set_state(SalaryCountStates.PREMIUM_PERCENT)
     else:
-        await query.message.edit_text(
-            "⚡ Введи процент премии за <b>AHT</b>",
-            reply_markup=salary_supervisor_aht(),
-        )
+        user_data = await state.get_data()
+        if user_data["POSITION"] == "specialist":
+            await query.message.edit_text(
+                "⚡ Введи процент премии за <b>AHT</b>",
+                reply_markup=salary_specialistist_aht(),
+            )
+        else:
+            await query.message.edit_text(
+                "⚡ Введи процент премии за <b>AHT</b>",
+                reply_markup=salary_supervisor_aht(),
+            )
+
+
+@menu_router.message(SalaryCountStates.PREMIUM_PERCENT)
+async def process_premium_percent(message: Message, state: FSMContext) -> None:
+    await state.update_data(PREMIUM_PERCENT=message.text)
+    user_data = await state.get_data()
+
+    salary = await salary_with_percents(
+        position=user_data["POSITION"],
+        hourly_payment=float(user_data["HOURLY_RATE"]),
+        hours_worked=int(user_data["HOURS_WORKED"]),
+        coefficient=float(user_data["COEFFICIENT"]),
+        premium_percent=int(user_data["PREMIUM_PERCENT"]),
+    )
+    message_to_send = f"""
+Спасибо! Вот введенные тобой показатели:
+🕖 <b>ЧТС</b>: {user_data["HOURLY_RATE"]} руб/час
+⏳ <b>Отработано</b>: {user_data["HOURS_WORKED"]} часов
+📊 <b>Коэффициент</b>: {user_data["COEFFICIENT"]}
+🌟 <b>Процент премии</b>: {user_data["PREMIUM_PERCENT"]}%
+
+Оклад составляет <b>{salary["hours_salary"]}</b> руб
+Коэффициент составляет <b>{salary["coefficient"]}</b> руб
+Оклад с коэффициентом составляет <b>{salary["sum_hours_coefficient"]}</b>
+
+Общий процент премии составляет <b>{salary["premium_percent"]}%</b>
+Премия составляет <b>{salary["premium_salary"]}</b> руб
+
+Общая сумма до вычета составляет <b>{salary["salary_sum"]}</b> руб
+Налоги съедят <b>{salary["tax"]}</b> руб
+Общая сумма после вычета составляет <b>{salary["sum_after_tax"]}</b> руб
+"""
+    await message.answer(message_to_send)
+    await state.clear()
 
 
 @menu_router.callback_query(F.data.contains("aht"))
