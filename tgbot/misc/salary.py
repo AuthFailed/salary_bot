@@ -1,8 +1,8 @@
 async def salary_with_percents(
-    position: str,
     hourly_payment: int,
     hours_worked: int,
     coefficient: float,
+    position: str = "",
     aht: int = 0,
     flr: int = 0,
     gok: int = 0,

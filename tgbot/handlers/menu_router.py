@@ -47,16 +47,26 @@ async def start_count_salary(query: CallbackQuery, state: FSMContext):
 @menu_router.callback_query(F.data.contains("counttype"))
 @menu_router.message(SalaryCountStates.COUNT_TYPE)
 async def process_count_type(query: CallbackQuery, state: FSMContext) -> None:
+    await query.answer()
     await state.update_data(COUNT_TYPE=query.data.split("_")[-1])
-    await query.message.edit_text(
-        "Давай посчитаем зарплату\nВыбери свою должность", reply_markup=position()
-    )
-    await state.set_state(SalaryCountStates.POSITION)
+    user_data = await state.get_data()
+
+    if user_data["COUNT_TYPE"] == "sum":
+        await state.set_state(SalaryCountStates.HOURLY_RATE)
+        await query.message.edit_text(
+            "Давай посчитаем зарплату\nВведи часовую ставку в чат"
+        )
+    else:
+        await query.message.edit_text(
+            "Давай посчитаем зарплату\nВыбери свою должность", reply_markup=position()
+        )
+        await state.set_state(SalaryCountStates.HOURLY_RATE)
 
 
 @menu_router.callback_query(F.data.contains("position"))
 @menu_router.message(SalaryCountStates.POSITION)
 async def process_position(query: CallbackQuery, state: FSMContext) -> None:
+    await query.answer()
     await state.update_data(POSITION=query.data.split("_")[-1])
     await state.set_state(SalaryCountStates.HOURLY_RATE)
 
@@ -87,6 +97,7 @@ async def process_hours_worked(message: Message, state: FSMContext) -> None:
 @menu_router.callback_query(F.data.contains("coefficient"))
 @menu_router.message(SalaryCountStates.COEFFICIENT)
 async def process_coefficient(query: CallbackQuery, state: FSMContext) -> None:
+    await query.answer()
     await state.update_data(COEFFICIENT=query.data.split("_")[-1])
     await state.set_state(SalaryCountStates.AHT)
     user_data = await state.get_data()
@@ -114,7 +125,6 @@ async def process_premium_percent(message: Message, state: FSMContext) -> None:
     user_data = await state.get_data()
 
     salary = await salary_with_percents(
-        position=user_data["POSITION"],
         hourly_payment=float(user_data["HOURLY_RATE"]),
         hours_worked=int(user_data["HOURS_WORKED"]),
         coefficient=float(user_data["COEFFICIENT"]),
